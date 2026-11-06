@@ -2,15 +2,21 @@ import type { Patient } from '@/data/types';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
+/** Reads ISO strings; date-only values like 2015-05-17 are read as local dates, not UTC. */
+function parse(iso: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(iso);
+}
+
 /** 10/20/2025 */
 export function formatDate(iso: string): string {
-  const d = new Date(iso);
+  const d = parse(iso);
   return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`;
 }
 
 /** 2:39 PM */
 export function formatTime(iso: string): string {
-  const d = new Date(iso);
+  const d = parse(iso);
   const h = d.getHours() % 12 || 12;
   return `${h}:${pad(d.getMinutes())} ${d.getHours() < 12 ? 'AM' : 'PM'}`;
 }
@@ -24,7 +30,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 /** Fri, Dec 14 at 2:39 PM */
 export function formatDayHeader(iso: string): string {
-  const d = new Date(iso);
+  const d = parse(iso);
   return `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()} at ${formatTime(iso)}`;
 }
 
@@ -40,17 +46,31 @@ const FULL_MONTHS = [
 
 /** Monday 3/17 @ 8:00 AM */
 export function formatAppointment(iso: string): string {
-  const d = new Date(iso);
+  const d = parse(iso);
   return `${FULL_DAYS[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()} @ ${formatTime(iso)}`;
 }
 
 /** Fri Apr 12 @ 9:00 AM */
 export function formatShortAppointment(iso: string): string {
-  const d = new Date(iso);
+  const d = parse(iso);
   return `${DAYS[d.getDay()]} ${MONTHS[d.getMonth()]} ${d.getDate()} @ ${formatTime(iso)}`;
 }
 
 /** April 2026 */
 export function formatMonth(d: Date): string {
   return `${FULL_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/** Oct 20, 2024 */
+export function formatLongDate(iso: string): string {
+  const d = parse(iso);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+export function ageInYears(dob: string): number {
+  const birth = parse(dob);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  if (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate())) age--;
+  return age;
 }

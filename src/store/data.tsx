@@ -62,7 +62,10 @@ type Action =
   | { type: 'markThreadRead'; threadId: string }
   | { type: 'addAppointment'; appointment: Appointment }
   | { type: 'updateAppointment'; appointmentId: string; change: Partial<Appointment> }
-  | { type: 'addFormSubmission'; submission: FormSubmission };
+  | { type: 'addFormSubmission'; submission: FormSubmission }
+  | { type: 'addCaregiver'; caregiver: Caregiver }
+  | { type: 'updateCaregiver'; caregiverId: string; change: Partial<Caregiver> }
+  | { type: 'removeCaregiver'; caregiverId: string };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -172,6 +175,17 @@ function reducer(state: DataState, action: Action): DataState {
       };
     case 'addFormSubmission':
       return { ...state, formSubmissions: [action.submission, ...state.formSubmissions] };
+    case 'addCaregiver':
+      return { ...state, caregivers: [...state.caregivers, action.caregiver] };
+    case 'updateCaregiver':
+      return {
+        ...state,
+        caregivers: state.caregivers.map((c) =>
+          c.id === action.caregiverId ? { ...c, ...action.change } : c,
+        ),
+      };
+    case 'removeCaregiver':
+      return { ...state, caregivers: state.caregivers.filter((c) => c.id !== action.caregiverId) };
   }
 }
 
@@ -219,6 +233,12 @@ type DataContextValue = {
   rescheduleAppointment: (appointmentId: string, at: string) => void;
   cancelAppointment: (appointmentId: string) => void;
   completeChecklist: (appointmentId: string) => void;
+  approveCaregiver: (caregiverId: string) => void;
+  /** Revokes access, declines a request, or cancels an invite. */
+  removeCaregiver: (caregiverId: string) => void;
+  inviteCaregiver: (name: string, email: string) => void;
+  /** Sends the pharmacy a request to link a new family member to this account. */
+  requestPatientLink: (input: { name: string; dob: string; relation: string }) => void;
   resetDemoData: () => void;
 };
 
@@ -238,14 +258,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }
 
   // Fake pharmacist: answers each message after a short pause.
-  function scheduleReply(threadId: string, text: string, hasImage: boolean) {
+  function scheduleReply(threadId: string, replyText: string) {
     setReplyingThreadIds((ids) => [...ids, threadId]);
     setTimeout(() => {
       const reply: Message = {
         id: newId('msg'),
         fromMe: false,
         author: api.PHARMACY_STAFF,
-        text: api.pharmacyReply(text, hasImage),
+        text: replyText,
         at: new Date().toISOString(),
       };
       dispatch({ type: 'addMessage', threadId, message: reply, unread: true });
@@ -306,7 +326,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     replyingThreadIds,
     sendMessage: (threadId, text, imageUri) => {
       dispatch({ type: 'addMessage', threadId, message: myMessage(text, imageUri), unread: false });
-      scheduleReply(threadId, text, !!imageUri);
+      scheduleReply(threadId, api.pharmacyReply(text, !!imageUri));
     },
     startThread: ({ patientId, topic, subject, text, imageUri }) => {
       const thread: Thread = {
@@ -318,7 +338,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         messages: [myMessage(text, imageUri)],
       };
       dispatch({ type: 'addThread', thread });
-      scheduleReply(thread.id, text, !!imageUri);
+      scheduleReply(thread.id, api.pharmacyReply(text, !!imageUri));
       return thread.id;
     },
     markThreadRead: (threadId) => dispatch({ type: 'markThreadRead', threadId }),
@@ -359,6 +379,43 @@ export function DataProvider({ children }: { children: ReactNode }) {
           submittedAt: new Date().toISOString(),
         },
       });
+    },
+    approveCaregiver: (caregiverId) =>
+      dispatch({
+        type: 'updateCaregiver',
+        caregiverId,
+        change: { status: 'authorized', date: new Date().toISOString() },
+      }),
+    removeCaregiver: (caregiverId) => dispatch({ type: 'removeCaregiver', caregiverId }),
+    inviteCaregiver: (name, email) =>
+      dispatch({
+        type: 'addCaregiver',
+        caregiver: {
+          id: newId('c'),
+          name,
+          email,
+          status: 'invited',
+          date: new Date().toISOString(),
+        },
+      }),
+    requestPatientLink: ({ name, dob, relation }) => {
+      const thread: Thread = {
+        id: newId('t'),
+        patientId: user?.patientId ?? mock.patients[0].id,
+        topic: 'question',
+        subject: `Request to add ${name} to my care`,
+        unread: false,
+        messages: [
+          myMessage(
+            `Please add ${name} (born ${dob}, ${relation}) as a patient under my care.`,
+          ),
+        ],
+      };
+      dispatch({ type: 'addThread', thread });
+      scheduleReply(
+        thread.id,
+        `Thanks! We received your request for ${name}. We'll verify the details and may call you to confirm. This usually takes 1 business day.`,
+      );
     },
     resetDemoData: () => dispatch({ type: 'reset' }),
   };

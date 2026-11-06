@@ -93,7 +93,7 @@ export type Caregiver = {
   id: string;
   name: string;
   email: string;
-  status: 'authorized' | 'pending';
+  status: 'authorized' | 'pending' | 'invited';
   date: string;
 };
 
