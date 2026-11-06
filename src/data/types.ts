@@ -39,12 +39,16 @@ export type Medication = {
 
 export type OrderStatus = 'submitted' | 'ready' | 'picked-up';
 
+export type PickupMethod = 'store' | 'delivery';
+
 export type Order = {
   id: string;
   patientId: string;
   medicationIds: string[];
   status: OrderStatus;
   createdAt: string;
+  pickup: PickupMethod;
+  note?: string;
 };
 
 export type Message = {

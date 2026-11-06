@@ -4,17 +4,20 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { AuthProvider, useAuth } from '@/store/auth';
+import { DataProvider, useData } from '@/store/data';
 
 SplashScreen.preventAutoHideAsync();
 
 function RootNavigator() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const { isReady: dataReady } = useData();
+  const isLoading = authLoading || !dataReady;
 
   useEffect(() => {
     if (!isLoading) SplashScreen.hideAsync();
   }, [isLoading]);
 
-  // Keep the splash screen up while the saved session is restored.
+  // Keep the splash screen up while the saved session and demo data load.
   if (isLoading) return null;
 
   return (
@@ -33,8 +36,10 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <StatusBar style="light" />
-      <RootNavigator />
+      <DataProvider>
+        <StatusBar style="light" />
+        <RootNavigator />
+      </DataProvider>
     </AuthProvider>
   );
 }

@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
@@ -7,9 +7,11 @@ import { PharmacyMap } from '@/components/pharmacy-map';
 import { Colors, FontSize, Spacing } from '@/constants/theme';
 import { patients, pharmacy } from '@/data/mock';
 import { useAuth } from '@/store/auth';
+import { useData } from '@/store/data';
 
 export default function AccountScreen() {
   const { user, signOut } = useAuth();
+  const { resetDemoData } = useData();
   const me = patients.find((p) => p.id === user?.patientId);
   const family = patients.filter((p) => p.id !== user?.patientId);
 
@@ -49,6 +51,17 @@ export default function AccountScreen() {
         </View>
       </Card>
 
+      <Button
+        title="Reset demo data"
+        variant="outline"
+        style={styles.gap}
+        onPress={() =>
+          Alert.alert('Reset demo data?', 'Orders, messages and changes you made will be cleared.', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Reset', style: 'destructive', onPress: resetDemoData },
+          ])
+        }
+      />
       <Button title="Sign out" variant="outline" onPress={signOut} style={styles.gap} />
     </ScrollView>
   );

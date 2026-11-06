@@ -123,6 +123,7 @@ export const orders: Order[] = [
     patientId: 'p-chris',
     medicationIds: ['m-2'],
     status: 'picked-up',
+    pickup: 'store',
     createdAt: daysFromNow(-17),
   },
   {
@@ -130,6 +131,7 @@ export const orders: Order[] = [
     patientId: 'p-chris',
     medicationIds: ['m-3'],
     status: 'ready',
+    pickup: 'store',
     createdAt: daysFromNow(-1),
   },
 ];
