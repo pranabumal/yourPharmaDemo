@@ -5,6 +5,7 @@ import { Card } from '@/components/card';
 import { IconLine } from '@/components/status-line';
 import { Colors, FontSize, Radius, Spacing } from '@/constants/theme';
 import type { OrderStatus } from '@/data/types';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useData } from '@/store/data';
 import { formatDate, formatTime } from '@/utils/format';
 
@@ -16,6 +17,7 @@ const STATUS: Record<OrderStatus, { label: string; color: string; bg: string }> 
 
 export function OrdersList() {
   const { state, currentPatientId, setOrderStatus } = useData();
+  const refreshControl = usePullToRefresh();
   const orders = state.orders
     .filter((o) => o.patientId === currentPatientId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -24,6 +26,7 @@ export function OrdersList() {
 
   return (
     <FlatList
+      refreshControl={refreshControl}
       data={orders}
       keyExtractor={(o) => o.id}
       contentContainerStyle={styles.list}

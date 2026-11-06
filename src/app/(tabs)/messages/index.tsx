@@ -7,6 +7,7 @@ import { TopicIcon } from '@/components/topic-icon';
 import { Colors, FontSize, Spacing } from '@/constants/theme';
 import { patients, pharmacy } from '@/data/mock';
 import type { Thread } from '@/data/types';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useData } from '@/store/data';
 import { formatDate, fullName } from '@/utils/format';
 
@@ -14,6 +15,7 @@ const lastAt = (t: Thread) => t.messages[t.messages.length - 1]?.at ?? '';
 
 export default function MessagesScreen() {
   const { state } = useData();
+  const refreshControl = usePullToRefresh();
 
   // One section per person, newest conversation first; people with no messages are skipped.
   const sections = patients
@@ -28,6 +30,7 @@ export default function MessagesScreen() {
   return (
     <View style={styles.flex}>
       <SectionList
+        refreshControl={refreshControl}
         sections={sections}
         keyExtractor={(t) => t.id}
         contentContainerStyle={styles.list}

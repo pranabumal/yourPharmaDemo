@@ -9,6 +9,7 @@ import { IconLine } from '@/components/status-line';
 import { Colors, FontSize, Spacing } from '@/constants/theme';
 import { patients } from '@/data/mock';
 import type { Patient } from '@/data/types';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useData } from '@/store/data';
 import { formatDate, fullName } from '@/utils/format';
 import { refillStatus } from '@/utils/refill-status';
@@ -130,10 +131,11 @@ function PatientCard({ patient }: { patient: Patient }) {
 }
 
 export function PatientsList() {
+  const refreshControl = usePullToRefresh();
   const dependents = patients.filter((p) => p.relation !== 'self');
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} refreshControl={refreshControl}>
       <View style={styles.headingRow}>
         <Text style={styles.heading}>Patients under your care</Text>
         <Pressable

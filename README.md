@@ -1,56 +1,78 @@
-# Welcome to your Expo app 👋
+# Your Pharmacy (demo)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A demo pharmacy patient app, inspired by the Lumistry patient portal, built with Expo (SDK 58), React Native and Expo Router. It has no backend: all data is mock data saved on the device.
 
-## Get started
+**Demo login:** `chris@demo.com` / `demo123`. You can also tap **Use demo account**.
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+| Tab | What you can do |
+|---|---|
+| Meds | See medications per family member, refill status, order refills (pick up or delivery), track orders, archive, add a med, turn auto-refill on or off |
+| Messages | Chat with the pharmacy (simulated replies), attach photos, start new conversations, get alerts when orders are ready and appointments are booked |
+| Appointments | Upcoming and past visits, book with a calendar and time slots, reschedule, cancel, fill in the pre-visit checklist |
+| Family | Patients under your care (appointments, forms, meds), caregivers (revoke, review requests, invite), request to add a family member |
+| Account | Pharmacy on a Google map, call or get directions, reset demo data, sign out |
 
-2. Start the app
+Simulated behaviour: orders become "ready" 15 seconds after you place them, and the pharmacist replies to messages after about 2.5 seconds.
 
-   ```bash
-   npx expo start
-   ```
+## Setup
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Requires Node 20 or newer (`nvm use 22`).
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+Create a `.env` file (git ignores it) with your Google Maps key:
 
-### Other setup steps
+```
+GOOGLE_MAPS_API_KEY=AIza...
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Run on a phone (Expo Go)
 
-## Learn more
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Scan the QR code with Expo Go on Android. In Expo Go, maps use Expo Go's own key.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Build an installable APK (EAS)
 
-## Join the community
+1. Upload the Maps key to EAS once. Cloud builds can't see your local `.env`:
+   ```bash
+   npx eas-cli@latest env:set --name GOOGLE_MAPS_API_KEY \
+     --value "$(grep GOOGLE_MAPS_API_KEY .env | cut -d= -f2)" \
+     --environment preview --environment production --visibility sensitive
+   ```
+2. Build:
+   ```bash
+   npx eas-cli@latest build -p android --profile preview
+   ```
+3. Open the link EAS prints on your phone and install the APK.
+4. In Google Cloud, make sure the key's Android restriction lists package `com.pranab.pharmacydemo` and the keystore SHA-1. Run `npx eas-cli@latest credentials` → Android → preview to see the SHA-1.
 
-Join our community of developers creating universal apps.
+## Project layout
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```
+src/
+  app/                 screens (Expo Router: every file is a route)
+    login.tsx
+    (tabs)/            Meds, Messages, Appointments, Family, Account
+    chat/[threadId]    full-screen conversation
+  components/          shared UI (cards, header, calendar, chat bubble, map…)
+  features/            larger pieces of a single tab (meds lists, family lists)
+  data/                mock data, types, fake appointment availability
+  services/api.ts      fake backend (swap for real HTTP calls later)
+  store/               auth session and demo data store (saved with AsyncStorage)
+  utils/               date formatting, refill status, photo picker
+```
+
+## Checks
+
+```bash
+npx tsc --noEmit
+npx expo lint
+npx expo-doctor
+```

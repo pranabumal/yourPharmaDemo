@@ -8,6 +8,7 @@ import { IconLine } from '@/components/status-line';
 import { Colors, FontSize, Spacing } from '@/constants/theme';
 import { pharmacy } from '@/data/mock';
 import type { Caregiver } from '@/data/types';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useData } from '@/store/data';
 import { formatLongDate } from '@/utils/format';
 
@@ -81,10 +82,11 @@ function CaregiverCard({ caregiver }: { caregiver: Caregiver }) {
 }
 
 export function CaregiversList() {
+  const refreshControl = usePullToRefresh();
   const { state } = useData();
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} refreshControl={refreshControl}>
       <Text style={styles.heading}>Caregivers</Text>
       <View style={styles.location}>
         <Ionicons name="location-outline" size={16} color={Colors.textMuted} />

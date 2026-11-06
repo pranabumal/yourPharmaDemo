@@ -8,6 +8,7 @@ import { ServiceCard } from '@/components/service-card';
 import { Colors, FontSize, Spacing } from '@/constants/theme';
 import { nextAvailable } from '@/data/availability';
 import { pharmacy, services } from '@/data/mock';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useData } from '@/store/data';
 
 type Tab = 'upcoming' | 'past';
@@ -20,6 +21,7 @@ const TABS: { key: Tab; label: string }[] = [
 export default function AppointmentsScreen() {
   const [tab, setTab] = useState<Tab>('upcoming');
   const { state } = useData();
+  const refreshControl = usePullToRefresh();
   const now = new Date().toISOString();
 
   const upcoming = state.appointments
@@ -35,7 +37,7 @@ export default function AppointmentsScreen() {
     <View style={styles.flex}>
       <SegmentedTabs tabs={TABS} value={tab} onChange={setTab} />
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} refreshControl={refreshControl}>
         {tab === 'upcoming' ? (
           <>
             {upcoming.length === 0 && <Text style={styles.empty}>No upcoming appointments.</Text>}

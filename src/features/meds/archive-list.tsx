@@ -3,15 +3,18 @@ import { FlatList, StyleSheet, Text } from 'react-native';
 
 import { MedCard } from '@/components/med-card';
 import { Colors, Spacing } from '@/constants/theme';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useData } from '@/store/data';
 import { refillStatus } from '@/utils/refill-status';
 
 export function ArchiveList() {
   const { state, currentPatientId, setArchived } = useData();
+  const refreshControl = usePullToRefresh();
   const meds = state.medications.filter((m) => m.patientId === currentPatientId && m.archived);
 
   return (
     <FlatList
+      refreshControl={refreshControl}
       data={meds}
       keyExtractor={(m) => m.id}
       contentContainerStyle={styles.list}

@@ -8,11 +8,13 @@ import { MedCard } from '@/components/med-card';
 import { PatientPicker } from '@/components/patient-picker';
 import { Colors, FontSize, Spacing } from '@/constants/theme';
 import { pharmacy } from '@/data/mock';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useData } from '@/store/data';
 import { canOrder, refillStatus } from '@/utils/refill-status';
 
 export function MedsList() {
   const { state, currentPatientId, selectPatient, setArchived } = useData();
+  const refreshControl = usePullToRefresh();
   const [selected, setSelected] = useState<string[]>([]);
   const [newestFirst, setNewestFirst] = useState(true);
 
@@ -66,6 +68,7 @@ export function MedsList() {
   return (
     <View style={styles.flex}>
       <FlatList
+        refreshControl={refreshControl}
         data={meds}
         keyExtractor={(m) => m.id}
         ListHeaderComponent={header}

@@ -75,3 +75,8 @@ export function pharmacyReply(text: string, hasImage: boolean): string {
   if (hasImage) return "Thanks, we received your photo. We'll take a look and get back to you.";
   return 'Thanks for your message! A member of our team will get back to you shortly.';
 }
+
+/** Pretends to re-fetch data from the pharmacy (used by pull-to-refresh). */
+export async function refresh(): Promise<void> {
+  await wait(800);
+}
