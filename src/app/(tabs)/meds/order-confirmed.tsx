@@ -37,7 +37,7 @@ export default function OrderConfirmedScreen() {
       </Card>
 
       <Button title="Done" onPress={() => router.dismissTo('/meds')} style={styles.gap} />
-      <Pressable style={styles.message} onPress={() => router.navigate('/messages')}>
+      <Pressable style={styles.message} onPress={() => router.navigate('/messages/new')}>
         <Ionicons name="chatbox-outline" size={18} color={Colors.text} />
         <Text style={styles.messageText}>Send a secure message</Text>
       </Pressable>

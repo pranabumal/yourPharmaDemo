@@ -13,9 +13,11 @@ import type {
   Appointment,
   Caregiver,
   Medication,
+  Message,
   Order,
   OrderStatus,
   Thread,
+  ThreadTopic,
 } from '@/data/types';
 import * as api from '@/services/api';
 import { useAuth } from '@/store/auth';
@@ -50,9 +52,34 @@ type Action =
   | { type: 'setOrderStatus'; orderId: string; status: OrderStatus }
   | { type: 'setArchived'; medicationId: string; archived: boolean }
   | { type: 'setAutoRefill'; medicationId: string; autoRefill: boolean }
-  | { type: 'addMedication'; medication: Medication };
+  | { type: 'addMedication'; medication: Medication }
+  | { type: 'addThread'; thread: Thread }
+  | { type: 'addMessage'; threadId: string; message: Message; unread: boolean }
+  | { type: 'markThreadRead'; threadId: string };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+const newId = (prefix: string) =>
+  `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+/** Message from the pharmacy telling the patient an order is ready. */
+function orderReadyThread(order: Order, meds: Medication[]): Thread {
+  const names = meds.filter((m) => order.medicationIds.includes(m.id)).map((m) => m.name);
+  const text =
+    order.pickup === 'delivery'
+      ? `Your order is on its way: ${names.join(', ')}.`
+      : `Your refill is ready for pickup at S. Lamar: ${names.join(', ')}.`;
+  return {
+    id: newId('t'),
+    patientId: order.patientId,
+    topic: 'refill',
+    subject: 'Your recent refill order is ready for pickup',
+    unread: true,
+    messages: [
+      { id: newId('msg'), fromMe: false, author: api.PHARMACY_STAFF, text, at: new Date().toISOString() },
+    ],
+  };
+}
 
 function updateMed(meds: Medication[], id: string, change: Partial<Medication>) {
   return meds.map((m) => (m.id === id ? { ...m, ...change } : m));
@@ -85,9 +112,14 @@ function reducer(state: DataState, action: Action): DataState {
             : m,
         );
       }
+      const threads =
+        action.status === 'ready' && order.status !== 'ready'
+          ? [orderReadyThread(order, state.medications), ...state.threads]
+          : state.threads;
       return {
         ...state,
         medications,
+        threads,
         orders: state.orders.map((o) => (o.id === order.id ? { ...o, status: action.status } : o)),
       };
     }
@@ -105,8 +137,32 @@ function reducer(state: DataState, action: Action): DataState {
       };
     case 'addMedication':
       return { ...state, medications: [action.medication, ...state.medications] };
+    case 'addThread':
+      return { ...state, threads: [action.thread, ...state.threads] };
+    case 'addMessage':
+      return {
+        ...state,
+        threads: state.threads.map((t) =>
+          t.id === action.threadId
+            ? { ...t, unread: action.unread, messages: [...t.messages, action.message] }
+            : t,
+        ),
+      };
+    case 'markThreadRead':
+      return {
+        ...state,
+        threads: state.threads.map((t) => (t.id === action.threadId ? { ...t, unread: false } : t)),
+      };
   }
 }
+
+export type NewThreadInput = {
+  patientId: string;
+  topic: ThreadTopic;
+  subject: string;
+  text: string;
+  imageUri?: string;
+};
 
 type DataContextValue = {
   state: DataState;
@@ -119,6 +175,12 @@ type DataContextValue = {
   setArchived: (medicationId: string, archived: boolean) => void;
   setAutoRefill: (medicationId: string, autoRefill: boolean) => void;
   addMedication: (med: Omit<Medication, 'id'>) => void;
+  unreadCount: number;
+  /** Threads where the fake pharmacist is "typing" a reply. */
+  replyingThreadIds: string[];
+  sendMessage: (threadId: string, text: string, imageUri?: string) => void;
+  startThread: (input: NewThreadInput) => string;
+  markThreadRead: (threadId: string) => void;
   resetDemoData: () => void;
 };
 
@@ -128,6 +190,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
   const [isReady, setIsReady] = useState(false);
+  const [replyingThreadIds, setReplyingThreadIds] = useState<string[]>([]);
+
+  const me = mock.patients.find((p) => p.id === user?.patientId);
+  const myName = me ? `${me.firstName} ${me.lastName[0]}., ${user?.role}` : 'Me';
+
+  function myMessage(text: string, imageUri?: string): Message {
+    return { id: newId('msg'), fromMe: true, author: myName, text, imageUri, at: new Date().toISOString() };
+  }
+
+  // Fake pharmacist: answers each message after a short pause.
+  function scheduleReply(threadId: string, text: string, hasImage: boolean) {
+    setReplyingThreadIds((ids) => [...ids, threadId]);
+    setTimeout(() => {
+      const reply: Message = {
+        id: newId('msg'),
+        fromMe: false,
+        author: api.PHARMACY_STAFF,
+        text: api.pharmacyReply(text, hasImage),
+        at: new Date().toISOString(),
+      };
+      dispatch({ type: 'addMessage', threadId, message: reply, unread: true });
+      setReplyingThreadIds((ids) => ids.filter((id) => id !== threadId));
+    }, api.REPLY_AFTER_MS);
+  }
 
   // Load saved demo data once.
   useEffect(() => {
@@ -177,7 +263,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setAutoRefill: (medicationId, autoRefill) =>
       dispatch({ type: 'setAutoRefill', medicationId, autoRefill }),
     addMedication: (med) =>
-      dispatch({ type: 'addMedication', medication: { ...med, id: `m-${Date.now().toString(36)}` } }),
+      dispatch({ type: 'addMedication', medication: { ...med, id: newId('m') } }),
+    unreadCount: state.threads.filter((t) => t.unread).length,
+    replyingThreadIds,
+    sendMessage: (threadId, text, imageUri) => {
+      dispatch({ type: 'addMessage', threadId, message: myMessage(text, imageUri), unread: false });
+      scheduleReply(threadId, text, !!imageUri);
+    },
+    startThread: ({ patientId, topic, subject, text, imageUri }) => {
+      const thread: Thread = {
+        id: newId('t'),
+        patientId,
+        topic,
+        subject,
+        unread: false,
+        messages: [myMessage(text, imageUri)],
+      };
+      dispatch({ type: 'addThread', thread });
+      scheduleReply(thread.id, text, !!imageUri);
+      return thread.id;
+    },
+    markThreadRead: (threadId) => dispatch({ type: 'markThreadRead', threadId }),
     resetDemoData: () => dispatch({ type: 'reset' }),
   };
 

@@ -57,6 +57,7 @@ export type Message = {
   author: string;
   text: string;
   at: string;
+  imageUri?: string;
 };
 
 export type ThreadTopic = 'refill' | 'appointment' | 'prescription' | 'question';

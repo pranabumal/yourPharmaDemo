@@ -3,6 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { Colors } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/store/auth';
 import { DataProvider, useData } from '@/store/data';
 
@@ -28,6 +29,15 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={!!user}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="chat/[threadId]"
+          options={{
+            headerShown: true,
+            title: 'Message',
+            headerStyle: { backgroundColor: Colors.header },
+            headerTintColor: Colors.white,
+          }}
+        />
       </Stack.Protected>
     </Stack>
   );

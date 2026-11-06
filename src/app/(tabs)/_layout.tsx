@@ -5,6 +5,7 @@ import type { ColorValue } from 'react-native';
 
 import { AppHeader } from '@/components/app-header';
 import { Colors } from '@/constants/theme';
+import { useData } from '@/store/data';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -19,6 +20,7 @@ function tabIcon(name: IconName) {
 }
 
 export default function TabLayout() {
+  const { unreadCount } = useData();
   return (
     <Tabs
       screenOptions={{
@@ -26,11 +28,16 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textMuted,
         sceneStyle: { backgroundColor: Colors.background },
+        tabBarHideOnKeyboard: true,
       }}>
       <Tabs.Screen name="meds" options={{ title: 'Meds', tabBarIcon: tabIcon('pill') }} />
       <Tabs.Screen
         name="messages"
-        options={{ title: 'Messages', tabBarIcon: tabIcon('message-text-outline') }}
+        options={{
+          title: 'Messages',
+          tabBarIcon: tabIcon('message-text-outline'),
+          tabBarBadge: unreadCount || undefined,
+        }}
       />
       <Tabs.Screen
         name="appointments"

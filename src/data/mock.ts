@@ -178,9 +178,9 @@ export const threads: Thread[] = [
     subject: 'What time are you open til tonight?',
     unread: false,
     messages: [
-      { id: 'msg-3', fromMe: true, author: 'Chris S., Caregiver', text: 'What time are you open til tonight?', at: daysFromNow(-2, 14, 39) },
+      { id: 'msg-3', fromMe: true, author: 'Chris P., Caregiver', text: 'What time are you open til tonight?', at: daysFromNow(-2, 14, 39) },
       { id: 'msg-4', fromMe: false, author: pharmacist, text: "Hi, Chris! We'll be here until 10 pm.", at: daysFromNow(-2, 14, 40) },
-      { id: 'msg-5', fromMe: true, author: 'Chris S., Caregiver', text: 'Great, thank you.', at: daysFromNow(-2, 14, 41) },
+      { id: 'msg-5', fromMe: true, author: 'Chris P., Caregiver', text: 'Great, thank you.', at: daysFromNow(-2, 14, 41) },
     ],
   },
   {

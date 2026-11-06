@@ -39,3 +39,39 @@ export async function submitOrder(req: OrderRequest): Promise<Order> {
 
 /** How long the fake pharmacy takes to fill an order. */
 export const ORDER_READY_AFTER_MS = 15_000;
+
+/** How long the fake pharmacy takes to answer a message. */
+export const REPLY_AFTER_MS = 2_500;
+
+export const PHARMACY_STAFF = 'Robert M., Tech';
+
+const CANNED_REPLIES: { match: RegExp; reply: string }[] = [
+  {
+    match: /\b(open|close|hours?|tonight|today)\b/i,
+    reply: "We're open until 10 PM on weekdays and 6 PM on weekends.",
+  },
+  {
+    match: /\b(refill|ready|pick ?up|order)\b/i,
+    reply: "Let me check on that for you. You'll get a message here as soon as your order is ready.",
+  },
+  {
+    match: /\b(appointment|vaccin\w*|shot|book)\b/i,
+    reply: 'You can book or change appointments from the Appointments tab. Happy to help if you need anything else!',
+  },
+  {
+    match: /\b(food|take|dose|side effects?|interact\w*)\b/i,
+    reply: 'Good question! A pharmacist will review your medication and reply within the hour.',
+  },
+  {
+    match: /\b(insurance|card|price|cost|pay\w*)\b/i,
+    reply: "Thanks! We'll review your insurance details and let you know if anything changes.",
+  },
+];
+
+/** Fake pharmacist answer, picked by keywords in the patient's message. */
+export function pharmacyReply(text: string, hasImage: boolean): string {
+  const canned = CANNED_REPLIES.find((c) => c.match.test(text));
+  if (canned) return canned.reply;
+  if (hasImage) return "Thanks, we received your photo. We'll take a look and get back to you.";
+  return 'Thanks for your message! A member of our team will get back to you shortly.';
+}

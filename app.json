@@ -33,6 +33,14 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Your Pharmacy to attach photos of prescriptions and insurance cards to messages.",
+          "cameraPermission": "Allow Your Pharmacy to take photos of prescriptions and insurance cards.",
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {

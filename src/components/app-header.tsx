@@ -5,9 +5,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Logo } from '@/components/logo';
 import { Colors, Spacing } from '@/constants/theme';
+import { useData } from '@/store/data';
 
 export function AppHeader() {
   const insets = useSafeAreaInsets();
+  const { unreadCount } = useData();
   return (
     <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
       <Logo />
@@ -16,7 +18,7 @@ export function AppHeader() {
         hitSlop={12}
         onPress={() => router.navigate('/account')}>
         <Ionicons name="menu" size={28} color={Colors.white} />
-        <View style={styles.dot} />
+        {unreadCount > 0 && <View style={styles.dot} />}
       </Pressable>
     </View>
   );

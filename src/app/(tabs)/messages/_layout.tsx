@@ -1,5 +1,18 @@
 import { Stack } from 'expo-router';
 
-export default function Layout() {
-  return <Stack screenOptions={{ headerShown: false }} />;
+import { Colors } from '@/constants/theme';
+
+export default function MessagesLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: Colors.surface },
+        headerTintColor: Colors.primary,
+        headerTitleStyle: { color: Colors.text },
+        contentStyle: { backgroundColor: Colors.background },
+      }}>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="new" options={{ title: 'New message' }} />
+    </Stack>
+  );
 }

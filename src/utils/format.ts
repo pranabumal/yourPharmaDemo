@@ -18,3 +18,16 @@ export function formatTime(iso: string): string {
 export function fullName(p: Pick<Patient, 'firstName' | 'lastName'>): string {
   return `${p.firstName} ${p.lastName}`;
 }
+
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Fri, Dec 14 at 2:39 PM */
+export function formatDayHeader(iso: string): string {
+  const d = new Date(iso);
+  return `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()} at ${formatTime(iso)}`;
+}
+
+export function isSameDay(a: string, b: string): boolean {
+  return new Date(a).toDateString() === new Date(b).toDateString();
+}
