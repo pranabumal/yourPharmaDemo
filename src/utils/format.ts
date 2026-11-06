@@ -31,3 +31,26 @@ export function formatDayHeader(iso: string): string {
 export function isSameDay(a: string, b: string): boolean {
   return new Date(a).toDateString() === new Date(b).toDateString();
 }
+
+const FULL_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const FULL_MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+/** Monday 3/17 @ 8:00 AM */
+export function formatAppointment(iso: string): string {
+  const d = new Date(iso);
+  return `${FULL_DAYS[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()} @ ${formatTime(iso)}`;
+}
+
+/** Fri Apr 12 @ 9:00 AM */
+export function formatShortAppointment(iso: string): string {
+  const d = new Date(iso);
+  return `${DAYS[d.getDay()]} ${MONTHS[d.getMonth()]} ${d.getDate()} @ ${formatTime(iso)}`;
+}
+
+/** April 2026 */
+export function formatMonth(d: Date): string {
+  return `${FULL_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}

@@ -86,6 +86,7 @@ export type Appointment = {
   serviceId: string;
   at: string;
   checklistComplete: boolean;
+  cancelled?: boolean;
 };
 
 export type Caregiver = {

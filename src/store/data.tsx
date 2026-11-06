@@ -12,6 +12,7 @@ import * as mock from '@/data/mock';
 import type {
   Appointment,
   Caregiver,
+  FormSubmission,
   Medication,
   Message,
   Order,
@@ -21,6 +22,7 @@ import type {
 } from '@/data/types';
 import * as api from '@/services/api';
 import { useAuth } from '@/store/auth';
+import { formatDate, formatTime } from '@/utils/format';
 
 // Bump the version when the shape of DataState changes, so old saved data is dropped.
 const STORAGE_KEY = 'demo-data.v1';
@@ -31,6 +33,7 @@ export type DataState = {
   threads: Thread[];
   appointments: Appointment[];
   caregivers: Caregiver[];
+  formSubmissions: FormSubmission[];
   /** Whose records are being viewed ("Viewing medications for"). null = the user themself. */
   selectedPatientId: string | null;
 };
@@ -41,6 +44,7 @@ const initialState = (): DataState => ({
   threads: mock.threads,
   appointments: mock.appointments,
   caregivers: mock.caregivers,
+  formSubmissions: mock.formSubmissions,
   selectedPatientId: null,
 });
 
@@ -55,7 +59,10 @@ type Action =
   | { type: 'addMedication'; medication: Medication }
   | { type: 'addThread'; thread: Thread }
   | { type: 'addMessage'; threadId: string; message: Message; unread: boolean }
-  | { type: 'markThreadRead'; threadId: string };
+  | { type: 'markThreadRead'; threadId: string }
+  | { type: 'addAppointment'; appointment: Appointment }
+  | { type: 'updateAppointment'; appointmentId: string; change: Partial<Appointment> }
+  | { type: 'addFormSubmission'; submission: FormSubmission };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -88,7 +95,8 @@ function updateMed(meds: Medication[], id: string, change: Partial<Medication>) 
 function reducer(state: DataState, action: Action): DataState {
   switch (action.type) {
     case 'hydrate':
-      return action.state;
+      // Fill in fields added after the data was saved.
+      return { ...initialState(), ...action.state };
     case 'reset':
       return initialState();
     case 'selectPatient':
@@ -153,7 +161,32 @@ function reducer(state: DataState, action: Action): DataState {
         ...state,
         threads: state.threads.map((t) => (t.id === action.threadId ? { ...t, unread: false } : t)),
       };
+    case 'addAppointment':
+      return { ...state, appointments: [...state.appointments, action.appointment] };
+    case 'updateAppointment':
+      return {
+        ...state,
+        appointments: state.appointments.map((a) =>
+          a.id === action.appointmentId ? { ...a, ...action.change } : a,
+        ),
+      };
+    case 'addFormSubmission':
+      return { ...state, formSubmissions: [action.submission, ...state.formSubmissions] };
   }
+}
+
+/** Pharmacy message confirming a booking, so it shows up in Messages too. */
+function bookingThread(appointment: Appointment, text: string): Thread {
+  return {
+    id: newId('t'),
+    patientId: appointment.patientId,
+    topic: 'appointment',
+    subject: 'Your appointment is confirmed',
+    unread: true,
+    messages: [
+      { id: newId('msg'), fromMe: false, author: api.PHARMACY_STAFF, text, at: new Date().toISOString() },
+    ],
+  };
 }
 
 export type NewThreadInput = {
@@ -181,6 +214,11 @@ type DataContextValue = {
   sendMessage: (threadId: string, text: string, imageUri?: string) => void;
   startThread: (input: NewThreadInput) => string;
   markThreadRead: (threadId: string) => void;
+  /** Books a visit and returns the new appointment id. */
+  bookAppointment: (input: { patientId: string; serviceId: string; at: string }) => string;
+  rescheduleAppointment: (appointmentId: string, at: string) => void;
+  cancelAppointment: (appointmentId: string) => void;
+  completeChecklist: (appointmentId: string) => void;
   resetDemoData: () => void;
 };
 
@@ -284,6 +322,44 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return thread.id;
     },
     markThreadRead: (threadId) => dispatch({ type: 'markThreadRead', threadId }),
+    bookAppointment: ({ patientId, serviceId, at }) => {
+      const appointment: Appointment = {
+        id: newId('a'),
+        patientId,
+        serviceId,
+        at,
+        checklistComplete: false,
+      };
+      const service = mock.services.find((s) => s.id === serviceId);
+      dispatch({ type: 'addAppointment', appointment });
+      dispatch({
+        type: 'addThread',
+        thread: bookingThread(
+          appointment,
+          `You're booked for ${service?.name ?? 'your visit'} on ${formatDate(at)} at ${formatTime(at)}. Please complete the pre-visit checklist in the app before you arrive.`,
+        ),
+      });
+      return appointment.id;
+    },
+    rescheduleAppointment: (appointmentId, at) =>
+      dispatch({ type: 'updateAppointment', appointmentId, change: { at } }),
+    cancelAppointment: (appointmentId) =>
+      dispatch({ type: 'updateAppointment', appointmentId, change: { cancelled: true } }),
+    completeChecklist: (appointmentId) => {
+      const appt = state.appointments.find((a) => a.id === appointmentId);
+      if (!appt) return;
+      const service = mock.services.find((s) => s.id === appt.serviceId);
+      dispatch({ type: 'updateAppointment', appointmentId, change: { checklistComplete: true } });
+      dispatch({
+        type: 'addFormSubmission',
+        submission: {
+          id: newId('f'),
+          patientId: appt.patientId,
+          name: `${service?.name ?? 'Visit'} checklist`,
+          submittedAt: new Date().toISOString(),
+        },
+      });
+    },
     resetDemoData: () => dispatch({ type: 'reset' }),
   };
 
