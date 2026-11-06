@@ -2,6 +2,7 @@
   "expo": {
     "name": "Your Pharmacy",
     "slug": "react-tutorial",
+    "owner": "pranabsarker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -54,7 +55,7 @@
         }
       },
       "eas": {
-        "projectId": "c9cb8e0e-c535-4b13-bb65-8a8a16ad0e9b"
+        "projectId": "98542144-d7cd-4877-ac38-fd1ecd01f8e5"
       }
     }
   }
