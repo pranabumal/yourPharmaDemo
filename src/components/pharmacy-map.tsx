@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 import type { Pharmacy } from '@/data/types';
@@ -8,7 +8,8 @@ type Props = { pharmacy: Pharmacy; height?: number };
 export function PharmacyMap({ pharmacy, height = 150 }: Props) {
   return (
     <MapView
-      provider={PROVIDER_GOOGLE}
+      // Google Maps on Android; Apple Maps on iOS (no API key needed there).
+      provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
       style={[styles.map, { height }]}
       initialRegion={{ ...pharmacy.coords, latitudeDelta: 0.01, longitudeDelta: 0.01 }}
       scrollEnabled={false}
