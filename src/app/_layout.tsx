@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { Colors } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/store/auth';
 import { DataProvider, useData } from '@/store/data';
+import '@/utils/web-alert';
 
 SplashScreen.preventAutoHideAsync();
 

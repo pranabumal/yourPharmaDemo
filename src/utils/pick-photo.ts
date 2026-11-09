@@ -1,5 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
 async function fromCamera(): Promise<string | null> {
   const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -22,6 +22,11 @@ export function pickPhoto(onPicked: (uri: string) => void) {
     const uri = await source();
     if (uri) onPicked(uri);
   };
+  // In a browser the file picker already offers "Take photo" and "Photo library".
+  if (Platform.OS === 'web') {
+    handle(fromLibrary)();
+    return;
+  }
   Alert.alert('Attach a photo', 'e.g. a prescription label or insurance card', [
     { text: 'Take photo', onPress: handle(fromCamera) },
     { text: 'Choose from library', onPress: handle(fromLibrary) },

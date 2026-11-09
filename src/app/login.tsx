@@ -1,6 +1,8 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -30,6 +32,8 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn(e, p);
+      // Native apps are redirected by the route guard; the browser URL needs a push.
+      if (Platform.OS === 'web') router.replace('/meds');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {

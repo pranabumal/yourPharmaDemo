@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
@@ -14,6 +15,12 @@ export default function AccountScreen() {
   const { resetDemoData } = useData();
   const me = patients.find((p) => p.id === user?.patientId);
   const family = patients.filter((p) => p.id !== user?.patientId);
+
+  async function handleSignOut() {
+    await signOut();
+    // Native apps are redirected by the route guard; the browser URL needs a push.
+    if (Platform.OS === 'web') router.replace('/login');
+  }
 
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${pharmacy.coords.latitude},${pharmacy.coords.longitude}`;
 
@@ -62,7 +69,7 @@ export default function AccountScreen() {
           ])
         }
       />
-      <Button title="Sign out" variant="outline" onPress={signOut} style={styles.gap} />
+      <Button title="Sign out" variant="outline" onPress={handleSignOut} style={styles.gap} />
     </ScrollView>
   );
 }
